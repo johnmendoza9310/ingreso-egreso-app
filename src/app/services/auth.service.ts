@@ -28,6 +28,7 @@ export class AuthService {
     return this.auth.createUserWithEmailAndPassword(email, password)
     .then( fbuser => {
       const newUser = new Usuario(fbuser.user!.uid, nombre, email);
+      
       //Petición para crear documento de base de datos por cada usuario
       return this.firestore.doc(`${fbuser.user!.uid}/usuario`).set({...newUser})
     })
