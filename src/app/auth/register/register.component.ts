@@ -1,10 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   Validators,
 } from '@angular/forms';
 import { Router } from '@angular/router';
+
+import { Store } from '@ngrx/store';
+import { Subscription } from 'rxjs';
+import { AppState } from 'src/app/app.reducer';
+import * as ui from 'src/app/shared/ui.actions';
+
 import { AuthService } from 'src/app/services/auth.service';
 import Swal from 'sweetalert2';
 
@@ -13,15 +19,24 @@ import Swal from 'sweetalert2';
   templateUrl: './register.component.html',
   styles: [],
 })
-export class RegisterComponent implements OnInit {
-  public registroForm!: FormGroup;
+export class RegisterComponent implements OnInit, OnDestroy {
+  public registroForm!: UntypedFormGroup;
+  public cargando: boolean = false;
+  uiSubscription!: Subscription;
 
-  constructor(private fb: FormBuilder, 
-              private authService: AuthService,
-              private router: Router) {}
+  constructor(
+    private fb: UntypedFormBuilder,
+    private authService: AuthService,
+    private router: Router,
+    private store: Store<AppState>
+  ) {}
 
   ngOnInit(): void {
     this._initForm();
+
+    this.uiSubscription = this.store
+      .select('ui')
+      .subscribe((ui) => (this.cargando = ui.isLoading));
   }
 
   private _initForm(): void {
@@ -32,28 +47,40 @@ export class RegisterComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    this.uiSubscription.unsubscribe();
+  }
+
   crearUsuario(): void {
-    if (this.registroForm.invalid) {return;}
+    if (this.registroForm.invalid) {
+      return;
+    }
 
-    Swal.fire({
-      title: 'Espere por favor',
-      didOpen: () => {
-        Swal.showLoading()
-      }
-    })
+    this.store.dispatch(ui.isLoading());
 
+    // Swal.fire({
+    //   title: 'Espere por favor',
+    //   didOpen: () => {
+    //     Swal.showLoading()
+    //   }
+    // })
 
-    const {nombre, correo, password} = this.registroForm.value;
+    const { nombre, correo, password } = this.registroForm.value;
 
-    this.authService.crearUsuario(nombre, correo, password)
-    .then(credenciales => {
-      Swal.close();
-      this.router.navigate(['/']);
-    })
-    .catch(err=> Swal.fire({
-      icon: 'error',
-      title: 'Oops...',
-      text: err.message,
-    }));
+    this.authService
+      .crearUsuario(nombre, correo, password)
+      .then((credenciales) => {
+        // Swal.close();
+        this.store.dispatch(ui.stopLoading());
+        this.router.navigate(['/']);
+      })
+      .catch((err) => {
+        this.store.dispatch(ui.stopLoading());
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: err.message,
+        });
+      });
   }
 }
