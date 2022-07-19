@@ -9,6 +9,7 @@ import * as authActions from '../auth/auth.actions';
 
 import { map, Subscription } from 'rxjs';
 import { Usuario } from '../models/usuario.models';
+import * as ingresoEgresoActions from '../ingreso-egreso/ingreso-egreso.actions';
 
 @Injectable({
   providedIn: 'root'
@@ -16,6 +17,11 @@ import { Usuario } from '../models/usuario.models';
 export class AuthService {
 
   userSubscription!: Subscription;
+  private _user!: Usuario;
+
+  get user(){
+    return this._user;
+  }
 
   constructor(public auth: AngularFireAuth,
               private firestore: AngularFirestore,
@@ -27,19 +33,25 @@ export class AuthService {
     this.auth.authState.subscribe( fuser => {
 
       if (fuser) {
-        this.userSubscription = this.firestore.doc(`${fuser.uid}/usuario`).valueChanges()
+        this.userSubscription = this.firestore.doc(`${fuser.uid}/usuario`)
+        .valueChanges()
         .subscribe((fireStoreUser: any) => {
-          console.log(fireStoreUser);
-
           const user = Usuario.fromFirebase(fireStoreUser);
+          this._user = user;
           // const temUser = new Usuario('abc', 'borrarme', 'fjfhfjf@gmail.com');
           // this.store.dispatch(authActions.setUser({user: user}))
           this.store.dispatch(authActions.setUser({user})) //cuando la propiedad y el valor son iguales
           
         });
       } else {
+        this._user = {
+            uid: '',
+            nombre: '',
+            email: ''
+        }
         this.userSubscription.unsubscribe();
-        this.store.dispatch(authActions.unSetUser())
+        this.store.dispatch(authActions.unSetUser());
+        this.store.dispatch(ingresoEgresoActions.unSetItems());
       }
     })
 
