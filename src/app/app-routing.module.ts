@@ -10,11 +10,12 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   // { path: '', component: DashboardComponent},  antes de rutas hijas
+
   {
+    // canActivate: [AuthGuard],  canActivate bloquea la ruta pero carga el modulo
+    canLoad: [AuthGuard],  //AuthGuard debe implementarb el canload
     path: '',
-    component: DashboardComponent,
-    children: dashboardRoutes,
-    canActivate: [AuthGuard]
+    loadChildren: () => import ('./ingreso-egreso/ingreso-egreso.module').then( m => m.IngresoEgresoModule)
   },
   { path: '**', redirectTo: '' },
 ];

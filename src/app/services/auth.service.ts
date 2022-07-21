@@ -49,7 +49,7 @@ export class AuthService {
             nombre: '',
             email: ''
         }
-        this.userSubscription.unsubscribe();
+        this.userSubscription?.unsubscribe();
         this.store.dispatch(authActions.unSetUser());
         this.store.dispatch(ingresoEgresoActions.unSetItems());
       }

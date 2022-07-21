@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { AppState } from 'src/app/app.reducer';
+import { Store } from '@ngrx/store';;
 import { IngresoEgreso } from 'src/app/models/ingreso-egreso.model';
 import { ChartData, ChartEvent, ChartType } from 'chart.js';
+import { AppStateWithIngreso } from '../ingreso-egreso.reducer';
 
 @Component({
   selector: 'app-estadistica',
@@ -29,8 +29,13 @@ export class EstadisticaComponent implements OnInit {
   };
   public doughnutChartType: ChartType = 'doughnut';
 
-  constructor(private store: Store<AppState>) {}
 
+  // constructor(private store: Store<AppState>) {}
+  constructor(private store: Store<AppStateWithIngreso>) {}
+
+
+  //el reducer de ingresos egresos se cargo de forma perezosa, AppState no sabe que tambien tiene ingresoEgreso, el proble es de interfaz
+  //Se implementa extension de AppState original que contenga ingresosegresos
   ngOnInit(): void {
     this.store
       .select('ingresosEgresos')
